@@ -13,6 +13,7 @@ pub fn read_puzzle_input(day: &str) -> String {
 
 pub trait Puzzle<T> {
     fn solve(&self, document: &str) -> T;
-    fn test_cases(&self) -> Vec<(&str, T)>;
+    fn solve2(&self, document: &str) -> T;
+    fn test_cases(&self) -> Vec<(&str, T, T)>;
     const DAY: &'static str;
 }
