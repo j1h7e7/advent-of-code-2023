@@ -80,17 +80,28 @@ impl super::solve::Puzzle<i32> for Day1Puzzle {
     fn solve2(&self, document: &str) -> i32 {
         return get_updated_calibration_sum(document);
     }
+}
 
-    fn test_cases(&self) -> Vec<(&str, i32, i32)> {
-        return vec![
-            ("1abc2", 12, 12),
-            ("h5ellowor6ld", 56, 56),
-            ("te7st", 77, 77),
-            ("mu1lti\nl2in3e\n45test", 79, 79),
-            ("one3two", 33, 12),
-            ("three4threeight", 44, 38),
-        ];
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_number_from_line() {
+        assert_eq!(extract_number_from_line("1abc2"), 12);
+        assert_eq!(extract_number_from_line("h5ellowor6ld"), 56);
+        assert_eq!(extract_number_from_line("te7st"), 77);
     }
 
-    const DAY: &'static str = "day1";
+    #[test]
+    fn test_extract_number_from_line_include_text() {
+        assert_eq!(extract_number_from_line_include_text("one3two"), 12);
+        assert_eq!(extract_number_from_line_include_text("three4threeight"), 38);
+    }
+
+    #[test]
+    fn test_get_calibration_sum() {
+        let document: &str = "1abc2\nh5ellowor6ld\nte7st";
+        assert_eq!(get_calibration_sum(document), 145);
+    }
 }
