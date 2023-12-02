@@ -64,6 +64,29 @@ fn sum_game_ids(games: &str) -> i32 {
         .sum::<i32>();
 }
 
+fn get_game_power(game_line: &str) -> i32 {
+    let mut red: i32 = 0;
+    let mut green: i32 = 0;
+    let mut blue: i32 = 0;
+
+    game_line.split(';').for_each(|reveal| {
+        let reveal = get_reveal(reveal);
+        red = red.max(reveal.red);
+        green = green.max(reveal.green);
+        blue = blue.max(reveal.blue);
+    });
+
+    return red * green * blue;
+}
+
+fn sum_game_power(games: &str) -> i32 {
+    return games
+        .lines()
+        .map(|line| line.split(':').nth(1).unwrap().trim())
+        .map(|line| get_game_power(line))
+        .sum::<i32>();
+}
+
 pub struct Day2Puzzle {}
 impl super::solve::Puzzle<i32> for Day2Puzzle {
     fn solve(&self, document: &str) -> i32 {
@@ -71,7 +94,7 @@ impl super::solve::Puzzle<i32> for Day2Puzzle {
     }
 
     fn solve2(&self, document: &str) -> i32 {
-        panic!("Not implemented")
+        return sum_game_power(document);
     }
 }
 
@@ -144,5 +167,17 @@ mod tests {
 
         let document: &str = "Game 1: 1 red, 1 green, 1 blue; 1 red, 1 blue\nGame 2: 1 red, 1 green, 1 blue; 1 red, 1 blue";
         assert_eq!(sum_game_ids(document), 3);
+    }
+
+    #[test]
+    fn test_get_game_power() {
+        assert_eq!(
+            get_game_power("1 red, 1 green, 1 blue; 1 red, 1 blue"),
+            1 * 1 * 1
+        );
+        assert_eq!(
+            get_game_power("1 red, 3 green, 1 blue; 20 red, 1 green"),
+            20 * 3 * 1
+        );
     }
 }
