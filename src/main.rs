@@ -27,7 +27,17 @@ fn main() {
         .expect("Failed to read line");
     let part: i32 = part.trim().parse().expect("Please type a number!");
 
-    let document = solve::read_puzzle_input(&format!("day{}", day));
+    println!("Run test case? (y/n)");
+    let mut test_case = String::new();
+    std::io::stdin()
+        .read_line(&mut test_case)
+        .expect("Failed to read line");
+    let test_case: bool = test_case.trim() == "y";
+
+    let document = match test_case {
+        true => solve::read_puzzle_input(&format!("day{}test", day)),
+        false => solve::read_puzzle_input(&format!("day{}", day)),
+    };
     let answer = match part {
         1 => puzzle.solve(&document),
         2 => puzzle.solve2(&document),
