@@ -119,18 +119,19 @@ fn sum_gear_ratios(gear_values: &HashMap<(usize, usize), Vec<i32>>) -> i32 {
 }
 
 pub struct Day3Puzzle {}
-impl super::solve::Puzzle<i32> for Day3Puzzle {
-    fn solve(&self, document: &str) -> i32 {
+impl super::solve::Puzzle<String> for Day3Puzzle {
+    fn solve(&self, document: &str) -> String {
         let positions = get_symbol_positions(document);
         return document
             .lines()
             .zip(positions.iter())
             .map(|(line, pos_row)| sum_line_numbers(line, pos_row))
-            .sum();
+            .sum::<i32>()
+            .to_string();
     }
 
-    fn solve2(&self, document: &str) -> i32 {
-        return sum_gear_ratios(&get_gear_values(document));
+    fn solve2(&self, document: &str) -> String {
+        return sum_gear_ratios(&get_gear_values(document)).to_string();
     }
 }
 

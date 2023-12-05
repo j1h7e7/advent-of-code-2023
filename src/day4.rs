@@ -33,19 +33,20 @@ fn get_total_cards(document: &str) -> i32 {
 }
 
 pub struct Day4Puzzle {}
-impl super::solve::Puzzle<i32> for Day4Puzzle {
-    fn solve(&self, document: &str) -> i32 {
+impl super::solve::Puzzle<String> for Day4Puzzle {
+    fn solve(&self, document: &str) -> String {
         return document
             .lines()
             .map(|line| match get_card_matches(line) {
                 0 => 0,
                 n @ _ => 2_i32.pow(n as u32 - 1),
             })
-            .sum();
+            .sum::<i32>()
+            .to_string();
     }
 
-    fn solve2(&self, document: &str) -> i32 {
-        return get_total_cards(document);
+    fn solve2(&self, document: &str) -> String {
+        return get_total_cards(document).to_string();
     }
 }
 

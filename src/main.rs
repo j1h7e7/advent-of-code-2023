@@ -14,7 +14,7 @@ fn main() {
         .expect("Failed to read line");
     let day: i32 = day.trim().parse().expect("Please type a number!");
 
-    let puzzle: Box<dyn Puzzle<i32>> = match day {
+    let puzzle: Box<dyn Puzzle<String>> = match day {
         1 => Box::new(day1::Day1Puzzle {}),
         2 => Box::new(day2::Day2Puzzle {}),
         3 => Box::new(day3::Day3Puzzle {}),

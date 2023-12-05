@@ -72,13 +72,13 @@ fn get_updated_calibration_sum(document: &str) -> i32 {
 }
 
 pub struct Day1Puzzle {}
-impl super::solve::Puzzle<i32> for Day1Puzzle {
-    fn solve(&self, document: &str) -> i32 {
-        return get_calibration_sum(document);
+impl super::solve::Puzzle<String> for Day1Puzzle {
+    fn solve(&self, document: &str) -> String {
+        return get_calibration_sum(document).to_string();
     }
 
-    fn solve2(&self, document: &str) -> i32 {
-        return get_updated_calibration_sum(document);
+    fn solve2(&self, document: &str) -> String {
+        return get_updated_calibration_sum(document).to_string();
     }
 }
 

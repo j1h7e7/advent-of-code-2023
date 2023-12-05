@@ -88,13 +88,13 @@ fn sum_game_power(games: &str) -> i32 {
 }
 
 pub struct Day2Puzzle {}
-impl super::solve::Puzzle<i32> for Day2Puzzle {
-    fn solve(&self, document: &str) -> i32 {
-        return sum_game_ids(document);
+impl super::solve::Puzzle<String> for Day2Puzzle {
+    fn solve(&self, document: &str) -> String {
+        return sum_game_ids(document).to_string();
     }
 
-    fn solve2(&self, document: &str) -> i32 {
-        return sum_game_power(document);
+    fn solve2(&self, document: &str) -> String {
+        return sum_game_power(document).to_string();
     }
 }
 
