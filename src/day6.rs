@@ -1,16 +1,16 @@
 use itertools::Itertools;
 
-fn extract_numbers_from_line(line: &str) -> Vec<i32> {
+fn extract_numbers_from_line(line: &str) -> Vec<i64> {
     return line
         .split(':')
         .nth(1)
         .unwrap()
         .split_whitespace()
-        .map(|x| x.parse::<i32>().unwrap())
-        .collect::<Vec<i32>>();
+        .map(|x| x.parse::<i64>().unwrap())
+        .collect::<Vec<i64>>();
 }
 
-fn get_time_range(time_limit: i32, distance: i32) -> (i32, i32) {
+fn get_time_range(time_limit: i64, distance: i64) -> (i64, i64) {
     // distance if time is T and time held is t, is t*(T-t)
     // so we require t*(T-t) > D
     // wolfram alpha gives
@@ -18,7 +18,18 @@ fn get_time_range(time_limit: i32, distance: i32) -> (i32, i32) {
     let root_disc = (disc as f64).sqrt();
     let lower = ((time_limit as f64) - root_disc) / 2.0;
     let upper = ((time_limit as f64) + root_disc) / 2.0;
-    return (lower.floor() as i32 + 1, upper.ceil() as i32 - 1);
+    return (lower.floor() as i64 + 1, upper.ceil() as i64 - 1);
+}
+
+fn extract_long_number_from_line(line: &str) -> i64 {
+    return line
+        .split(':')
+        .nth(1)
+        .unwrap()
+        .split_whitespace()
+        .collect::<String>()
+        .parse::<i64>()
+        .unwrap();
 }
 
 pub struct Day6Puzzle {}
@@ -39,7 +50,14 @@ impl super::solve::Puzzle<String> for Day6Puzzle {
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        let (time, distance) = document
+            .lines()
+            .map(|line| extract_long_number_from_line(line))
+            .collect_tuple()
+            .unwrap();
+
+        let ans = get_time_range(time, distance);
+        return (ans.1 - ans.0 + 1).to_string();
     }
 }
 
@@ -55,5 +73,10 @@ mod tests {
     #[test]
     fn test_get_time_range() {
         assert_eq!(get_time_range(10, 10), (2, 8));
+    }
+
+    #[test]
+    fn test_extract_long_number_from_line() {
+        assert_eq!(extract_long_number_from_line("Time: 1  2  3"), 123);
     }
 }
