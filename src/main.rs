@@ -6,6 +6,7 @@ mod day3;
 mod day4;
 mod day5;
 mod day6;
+mod day7;
 mod solve;
 
 fn main() {
@@ -23,6 +24,7 @@ fn main() {
         4 => Box::new(day4::Day4Puzzle {}),
         5 => Box::new(day5::Day5Puzzle {}),
         6 => Box::new(day6::Day6Puzzle {}),
+        7 => Box::new(day7::Day7Puzzle {}),
         _ => panic!("Invalid day number"),
     };
 
