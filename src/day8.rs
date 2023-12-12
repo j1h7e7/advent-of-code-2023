@@ -1,3 +1,4 @@
+use num::integer::lcm;
 use std::collections::HashMap;
 
 fn get_single_node(node_info: &str) -> (&str, &str, &str) {
@@ -16,7 +17,7 @@ fn get_network(document: &str) -> HashMap<&str, (&str, &str)> {
     return raw_node_map;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Direction {
     L,
     R,
@@ -47,24 +48,56 @@ fn get_direction_sequence<'a>(route: &'a str) -> impl Iterator<Item = (usize, Di
         .enumerate();
 }
 
+fn get_starting_nodes<'a>(node_map: &'a HashMap<&'a str, (&'a str, &'a str)>) -> Vec<&'a str> {
+    return node_map
+        .iter()
+        .filter(|(node_name, (_, _))| node_name.ends_with("A"))
+        .map(|(node_name, _)| *node_name)
+        .collect();
+}
+
+fn get_cycle_length(
+    start_node: &str,
+    node_map: &HashMap<&str, (&str, &str)>,
+    directions: impl Iterator<Item = (usize, Direction)>,
+    end_condition: &dyn Fn(&str) -> bool,
+) -> usize {
+    let mut current_node = start_node;
+    for (step, direction) in directions {
+        current_node = take_step(current_node, &node_map, direction);
+        if end_condition(current_node) {
+            return step + 1;
+        }
+    }
+    panic!("Unreachable");
+}
+
 pub struct Day8Puzzle {}
 impl super::solve::Puzzle<String> for Day8Puzzle {
     fn solve(&self, document: &str) -> String {
         let directions = get_direction_sequence(document.lines().nth(0).unwrap());
         let node_map: HashMap<&str, (&str, &str)> = get_network(document);
 
-        let mut current_node = "AAA";
-        for (step, direction) in directions {
-            current_node = take_step(current_node, &node_map, direction);
-            if current_node == "ZZZ" {
-                return format!("{}", step + 1);
-            }
-        }
-        panic!("Unreachable");
+        return get_cycle_length("AAA", &node_map, directions, &|x| x.ends_with("Z")).to_string();
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        let node_map: HashMap<&str, (&str, &str)> = get_network(document);
+        let start_nodes = get_starting_nodes(&node_map);
+
+        return start_nodes
+            .iter()
+            .map(|x| {
+                get_cycle_length(
+                    x,
+                    &node_map,
+                    get_direction_sequence(document.lines().nth(0).unwrap()),
+                    &|x| x.ends_with("Z"),
+                ) as i128
+            })
+            .reduce(|x, y| lcm(x, y))
+            .unwrap()
+            .to_string();
     }
 }
 
