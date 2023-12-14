@@ -41,6 +41,26 @@ fn get_reflection_line(pattern: Vec<u128>) -> usize {
     return 0;
 }
 
+fn get_smudged_reflection_line(pattern: Vec<u128>) -> usize {
+    'main_loop: for i in 1..pattern.len() {
+        let iter1 = pattern.iter().take(i).rev();
+        let iter2 = pattern.iter().skip(i);
+        let mut smudges = 0_usize;
+        for (a, b) in iter1.zip(iter2) {
+            let smudge = (a ^ b).count_ones();
+            if smudge > 1 {
+                continue 'main_loop;
+            } else if smudge == 1 {
+                smudges += 1;
+            }
+        }
+        if smudges == 1 {
+            return i;
+        }
+    }
+    return 0;
+}
+
 pub struct Day13Puzzle {}
 impl super::solve::Puzzle<String> for Day13Puzzle {
     fn solve(&self, document: &str) -> String {
@@ -58,7 +78,18 @@ impl super::solve::Puzzle<String> for Day13Puzzle {
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        return document
+            .split("\n\n")
+            .map(|terrain| {
+                let row_pattern = get_row_pattern(terrain);
+                let col_pattern = get_col_pattern(terrain);
+                let row_reflection_line = get_smudged_reflection_line(row_pattern);
+                let col_reflection_line = get_smudged_reflection_line(col_pattern);
+                assert!((row_reflection_line != 0) ^ (col_reflection_line != 0));
+                return col_reflection_line + 100 * row_reflection_line;
+            })
+            .sum::<usize>()
+            .to_string();
     }
 }
 
