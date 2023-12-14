@@ -87,7 +87,14 @@ impl super::solve::Puzzle<String> for Day12Puzzle {
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        let lines = document.lines();
+        let mut ans = 0_i64;
+        for line in lines {
+            let (pattern, blobs) = get_pattern_and_blobs(line);
+            ans += get_possibilities(&vec![pattern].repeat(5).join("?"), &blobs.repeat(5));
+        }
+
+        return ans.to_string();
     }
 }
 
