@@ -1,21 +1,5 @@
 use std::collections::HashMap;
 
-fn get_lane_load(lane: &str) -> u32 {
-    let mut load: u32 = 0;
-    let mut slot: u32 = 0;
-    for (i, c) in lane.chars().enumerate() {
-        match c {
-            'O' => {
-                load += lane.len() as u32 - slot;
-                slot += 1;
-            }
-            '#' => slot = i as u32 + 1,
-            _ => (),
-        }
-    }
-    return load;
-}
-
 fn get_simplified_lane_load(lane: &str) -> u32 {
     return lane
         .chars()
@@ -27,122 +11,120 @@ fn get_simplified_lane_load(lane: &str) -> u32 {
         .sum();
 }
 
-fn transpose(document: &str) -> String {
-    let line_len = document.lines().next().unwrap().len();
-    let lanes = (0..line_len)
+fn transpose(document: &mut Vec<String>) -> () {
+    // assume document is square
+    *document = (0..document.len())
         .map(|i| {
             document
-                .lines()
+                .iter()
                 .map(|line| line.chars().nth(i).unwrap())
                 .collect::<String>()
         })
         .collect::<Vec<String>>();
-    return lanes.join("\n");
 }
-fn flip(document: &str) -> String {
-    return document
-        .lines()
+fn flip(document: &mut Vec<String>) -> () {
+    *document = document
+        .iter()
         .map(|line| line.chars().rev().collect::<String>())
-        .collect::<Vec<String>>()
-        .join("\n");
+        .collect::<Vec<String>>();
 }
-fn tilt_row_left(row: &str) -> String {
-    let mut new_row = String::new();
+fn tilt_row_left(row: &mut String) -> () {
+    let old_row = row.clone();
+    row.clear();
 
     let mut slot: usize = 0;
-    for (i, c) in row.chars().enumerate() {
+    for (i, c) in old_row.chars().enumerate() {
         match c {
             'O' => {
-                new_row.push('O');
+                row.push('O');
                 slot += 1;
             }
             '#' => {
                 for _ in 0..i - slot {
-                    new_row.push('.');
+                    row.push('.');
                 }
-                new_row.push('#');
+                row.push('#');
                 slot = i + 1;
             }
             '.' => (),
             _ => panic!("Invalid character"),
         }
     }
-    for _ in 0..row.len() - slot as usize {
-        new_row.push('.');
+    for _ in 0..old_row.len() - slot as usize {
+        row.push('.');
     }
-
-    return new_row;
 }
-fn tilt_board(board: &str) -> String {
-    return board
-        .lines()
-        .map(|line| tilt_row_left(line))
-        .collect::<Vec<String>>()
-        .join("\n");
+fn tilt_board(board: &mut Vec<String>) -> () {
+    for row in board {
+        tilt_row_left(row);
+    }
 }
-fn spin_cycle(board: &str) -> String {
-    let mut board = board.to_string(); // start: NESW
-    board = transpose(&board); // WSEN
-    board = tilt_board(&board); // N
-    board = transpose(&board); // NESW
-    board = tilt_board(&board); // W
-    board = transpose(&board); // WSEN
-    board = flip(&board); // WNES
-    board = tilt_board(&board); // S
-    board = transpose(&board); // SENW
-    board = flip(&board); // SWNE
-    board = tilt_board(&board); // E
-    board = flip(&board); // SENW
-    board = transpose(&board); // WNES
-    board = flip(&board); // WSEN
-    board = transpose(&board); // NESW
-
-    return board;
+fn spin_cycle(board: &mut Vec<String>) -> () {
+    // start: NESW
+    transpose(board); // WSEN
+    tilt_board(board); // N
+    transpose(board); // NESW
+    tilt_board(board); // W
+    transpose(board); // WSEN
+    flip(board); // WNES
+    tilt_board(board); // S
+    transpose(board); // SENW
+    flip(board); // SWNE
+    tilt_board(board); // E
+    flip(board); // SENW
+    transpose(board); // WNES
+    flip(board); // WSEN
+    transpose(board); // NESW
 }
 
 pub struct Day14Puzzle {}
 impl super::solve::Puzzle<String> for Day14Puzzle {
     fn solve(&self, document: &str) -> String {
-        let line_len = document.lines().next().unwrap().len();
-        let lanes = (0..line_len)
-            .map(|i| {
-                document
-                    .lines()
-                    .map(|line| line.chars().nth(i).unwrap())
-                    .collect::<String>()
-            })
-            .collect::<Vec<String>>();
-        return lanes
+        let mut board: Vec<String> = document
+            .to_string()
+            .lines()
+            .map(|line| line.to_string())
+            .collect();
+        transpose(&mut board);
+        tilt_board(&mut board);
+        return board
             .iter()
-            .map(|lane| get_lane_load(lane))
+            .map(|lane| get_simplified_lane_load(lane))
             .sum::<u32>()
             .to_string();
     }
 
     fn solve2(&self, document: &str) -> String {
-        let mut states: HashMap<String, usize> = HashMap::new();
-        let mut board = document.to_string();
+        let mut states: HashMap<Vec<String>, usize> = HashMap::new();
+        let mut board: Vec<String> = document
+            .to_string()
+            .lines()
+            .map(|line| line.to_string())
+            .collect();
         let mut i = 0;
         loop {
             if states.contains_key(&board) {
                 break;
             }
             states.insert(board.clone(), i);
-            board = spin_cycle(&board);
+            spin_cycle(&mut board);
             i += 1;
         }
         let cycle_start = states.get(&board).unwrap();
         let cycle_length = i - cycle_start;
         let cycle_index = (1000000000 - cycle_start) % cycle_length;
 
-        let board = states
+        let mut board = states
             .iter()
             .find(|(_, v)| **v == cycle_index + cycle_start)
             .unwrap()
-            .0;
+            .0
+            .clone();
 
-        return transpose(board)
-            .lines()
+        transpose(&mut board);
+
+        return board
+            .iter()
             .map(|lane| get_simplified_lane_load(lane))
             .sum::<u32>()
             .to_string();
@@ -154,15 +136,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_lane_load() {
-        assert_eq!(get_lane_load("..."), 0);
-        assert_eq!(get_lane_load("O.."), 3);
-        assert_eq!(get_lane_load("..O"), 3);
-        assert_eq!(get_lane_load(".#O"), 1);
-        assert_eq!(get_lane_load("O.O"), 5);
-    }
-
-    #[test]
     fn test_get_simple_lane_load() {
         assert_eq!(get_simplified_lane_load("..."), 0);
         assert_eq!(get_simplified_lane_load("O.."), 3);
@@ -171,21 +144,29 @@ mod tests {
 
     #[test]
     fn test_transpose() {
-        assert_eq!(transpose("..."), ".\n.\n.");
-        assert_eq!(transpose("...\n..."), "..\n..\n..");
-        assert_eq!(transpose(".\n.\n."), "...");
+        let mut vec: Vec<String> = vec![String::from("123"); 3];
+        transpose(&mut vec);
+        assert_eq!(
+            vec,
+            vec![
+                String::from("111"),
+                String::from("222"),
+                String::from("333")
+            ]
+        );
     }
 
     #[test]
     fn test_flip() {
-        assert_eq!(flip("..#"), "#..");
-        assert_eq!(flip("..#\n#.."), "#..\n..#");
+        let mut vec: Vec<String> = vec![String::from("#."), String::from(".#")];
+        flip(&mut vec);
+        assert_eq!(vec, vec![String::from(".#"), String::from("#.")]);
     }
 
     #[test]
     fn test_tilt_row() {
-        assert_eq!(tilt_row_left("..O"), "O..");
-        assert_eq!(tilt_row_left(".#.O"), ".#O.");
-        assert_eq!(tilt_row_left("..O...O"), "OO.....");
+        let mut row = String::from("O..#..O.O...O..#O");
+        tilt_row_left(&mut row);
+        assert_eq!(row, String::from("O..#OOO........#O"));
     }
 }
