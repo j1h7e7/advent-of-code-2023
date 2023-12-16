@@ -6,6 +6,7 @@ mod day11;
 mod day12;
 mod day13;
 mod day14;
+mod day15;
 mod day2;
 mod day3;
 mod day4;
@@ -39,6 +40,7 @@ fn main() {
         12 => Box::new(day12::Day12Puzzle {}),
         13 => Box::new(day13::Day13Puzzle {}),
         14 => Box::new(day14::Day14Puzzle {}),
+        15 => Box::new(day15::Day15Puzzle {}),
         _ => panic!("Invalid day number"),
     };
 
