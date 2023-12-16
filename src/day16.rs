@@ -55,7 +55,7 @@ fn get_next_position(position: ((i32, i32), Direction), env: char) -> Vec<((i32,
     panic!("Invalid environment");
 }
 
-fn get_energized_tiles(document: &str) -> HashSet<((i32, i32), Direction)> {
+fn get_energized_tiles(document: &str, start: ((i32, i32), Direction)) -> usize {
     let board = document
         .lines()
         .map(|x| x.chars().collect::<Vec<char>>())
@@ -63,7 +63,7 @@ fn get_energized_tiles(document: &str) -> HashSet<((i32, i32), Direction)> {
     let m = board.len();
     let n = board[0].len();
 
-    let mut positions = vec![((0, 0), Direction::E)];
+    let mut positions = vec![start];
     let mut visited: HashSet<((i32, i32), Direction)> = HashSet::new();
 
     while positions.len() > 0 {
@@ -85,22 +85,34 @@ fn get_energized_tiles(document: &str) -> HashSet<((i32, i32), Direction)> {
         }
         positions = next_positions;
     }
-    return visited;
+    return visited
+        .iter()
+        .map(|x| x.0)
+        .collect::<HashSet<(i32, i32)>>()
+        .len();
 }
 
 pub struct Day16Puzzle {}
 impl super::solve::Puzzle<String> for Day16Puzzle {
     fn solve(&self, document: &str) -> String {
-        let visited = get_energized_tiles(document)
-            .iter()
-            .map(|x| x.0)
-            .collect::<HashSet<(i32, i32)>>();
-
-        return visited.len().to_string();
+        return get_energized_tiles(document, ((0, 0), Direction::E)).to_string();
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        let m = document.lines().count() as i32;
+        let n = document.lines().next().unwrap().chars().count() as i32;
+
+        let mut ans = 0;
+        for i in 0..m {
+            ans = ans.max(get_energized_tiles(document, ((i, 0), Direction::E)));
+            ans = ans.max(get_energized_tiles(document, ((i, n - 1), Direction::W)));
+        }
+        for j in 0..n {
+            ans = ans.max(get_energized_tiles(document, ((0, j), Direction::S)));
+            ans = ans.max(get_energized_tiles(document, ((m - 1, j), Direction::N)));
+        }
+
+        return ans.to_string();
     }
 }
 
@@ -131,7 +143,7 @@ mod tests {
     #[test]
     fn test_get_energized_tiles() {
         let document = "|.\n\\.";
-        let energized_tiles = get_energized_tiles(document);
-        assert_eq!(energized_tiles.len(), 3);
+        let energized_tiles = get_energized_tiles(document, ((0, 0), Direction::E));
+        assert_eq!(energized_tiles, 3);
     }
 }
