@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashSet},
 };
 
 fn get_grid(document: &str) -> Vec<Vec<usize>> {
@@ -84,45 +84,92 @@ fn get_next_steps(state: State, bounds: (isize, isize)) -> Vec<State> {
     return next_states;
 }
 
+fn get_next_steps_2(state: State, bounds: (isize, isize)) -> Vec<State> {
+    let (x, y) = state.pos;
+    let (max_x, max_y) = bounds;
+
+    let mut next_states = vec![];
+
+    for direction in vec![Direction::N, Direction::E, Direction::S, Direction::W] {
+        if direction == state.direction && state.steps >= 10 {
+            continue;
+        }
+        if direction != state.direction && state.steps < 4 && state.pos != (0, 0) {
+            continue;
+        }
+        if direction == state.direction.opposite() {
+            continue;
+        }
+        let (next_x, next_y) = match direction {
+            Direction::N => (x - 1, y),
+            Direction::E => (x, y + 1),
+            Direction::S => (x + 1, y),
+            Direction::W => (x, y - 1),
+        };
+        if next_x < 0 || next_x >= max_x || next_y < 0 || next_y >= max_y {
+            continue;
+        }
+        next_states.push(State {
+            pos: (next_x, next_y),
+            direction,
+            steps: if direction == state.direction {
+                state.steps + 1
+            } else {
+                1
+            },
+        });
+    }
+
+    return next_states;
+}
+
+fn get_fastest_path(
+    document: &str,
+    step_generator: &dyn Fn(State, (isize, isize)) -> Vec<State>,
+    completion_condition: &dyn Fn(State) -> bool,
+) -> String {
+    let grid = get_grid(document);
+    let bounds = (grid.len() as isize, grid[0].len() as isize);
+
+    let mut queue: BinaryHeap<(isize, State)> = BinaryHeap::new();
+    let mut visited: HashSet<State> = HashSet::new();
+    queue.push((
+        0,
+        State {
+            pos: (0, 0),
+            direction: Direction::S,
+            steps: 0,
+        },
+    ));
+
+    loop {
+        let (cost, state) = queue.pop().unwrap();
+        if state.pos == (bounds.0 - 1, bounds.1 - 1) && completion_condition(state) {
+            return (-cost).to_string();
+        }
+        if visited.contains(&state) {
+            continue;
+        }
+        visited.insert(state);
+
+        let next_states = step_generator(state, bounds);
+        for next_state in next_states {
+            queue.push((
+                cost - grid[next_state.pos.0 as usize][next_state.pos.1 as usize] as isize,
+                next_state,
+            ));
+        }
+    }
+}
+
 pub struct Day17Puzzle {}
 impl super::solve::Puzzle<String> for Day17Puzzle {
     fn solve(&self, document: &str) -> String {
-        let grid = get_grid(document);
-        let bounds = (grid.len() as isize, grid[0].len() as isize);
-
-        let mut queue: BinaryHeap<(isize, State)> = BinaryHeap::new();
-        let mut visited: HashMap<State, isize> = HashMap::new();
-        queue.push((
-            0,
-            State {
-                pos: (0, 0),
-                direction: Direction::S,
-                steps: 0,
-            },
-        ));
-
-        loop {
-            let (cost, state) = queue.pop().unwrap();
-            if state.pos == (bounds.0 - 1, bounds.1 - 1) {
-                return (-cost).to_string();
-            }
-            if visited.contains_key(&state) && visited.get(&state).unwrap() >= &cost {
-                continue;
-            }
-            visited.insert(state, cost);
-
-            let next_states = get_next_steps(state, bounds);
-            for next_state in next_states {
-                queue.push((
-                    cost - grid[next_state.pos.0 as usize][next_state.pos.1 as usize] as isize,
-                    next_state,
-                ));
-            }
-        }
+        return get_fastest_path(document, &get_next_steps, &|_| true);
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        return get_fastest_path(document, &get_next_steps_2, &|state| state.steps >= 4);
     }
 }
 
