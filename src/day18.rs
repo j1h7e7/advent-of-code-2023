@@ -2,41 +2,59 @@ use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 enum Direction {
-    N,
-    E,
-    S,
-    W,
+    U,
+    R,
+    D,
+    L,
 }
 
-fn get_line_instruction(line: &str) -> (usize, Direction) {
+fn get_line_instruction(line: &str) -> (u64, Direction) {
     let dir = match line.chars().nth(0).unwrap() {
-        'U' => Direction::N,
-        'R' => Direction::E,
-        'D' => Direction::S,
-        'L' => Direction::W,
+        'U' => Direction::U,
+        'R' => Direction::R,
+        'D' => Direction::D,
+        'L' => Direction::L,
         _ => panic!("Invalid direction"),
     };
-    let steps = line.split(' ').nth(1).unwrap().parse::<usize>().unwrap();
+    let steps = line.split(' ').nth(1).unwrap().parse::<u64>().unwrap();
     return (steps, dir);
 }
 
-fn get_instructions(document: &str) -> Vec<(usize, Direction)> {
+fn get_updated_line_instruction(line: &str) -> (u64, Direction) {
+    let color = line.split("#").nth(1).unwrap()[0..6].to_string();
+
+    let distance = u64::from_str_radix(&color[0..5], 16).unwrap();
+    let dir = match color.chars().nth(5).unwrap() {
+        '0' => Direction::R,
+        '1' => Direction::D,
+        '2' => Direction::L,
+        '3' => Direction::U,
+        _ => panic!("Invalid direction"),
+    };
+
+    return (distance, dir);
+}
+
+fn get_instructions(
+    document: &str,
+    get_line_instruction: &dyn Fn(&str) -> (u64, Direction),
+) -> Vec<(u64, Direction)> {
     return document
         .lines()
         .map(|line| get_line_instruction(line))
         .collect();
 }
 
-fn get_point_sequence(instructions: Vec<(usize, Direction)>) -> Vec<(isize, isize)> {
+fn get_point_sequence(instructions: Vec<(u64, Direction)>) -> Vec<(isize, isize)> {
     let mut points: Vec<(isize, isize)> = Vec::new();
     let mut point = (0, 0);
     points.push(point);
     for (steps, direction) in instructions {
         match direction {
-            Direction::N => point.1 -= steps as isize,
-            Direction::E => point.0 += steps as isize,
-            Direction::S => point.1 += steps as isize,
-            Direction::W => point.0 -= steps as isize,
+            Direction::U => point.1 -= steps as isize,
+            Direction::R => point.0 += steps as isize,
+            Direction::D => point.1 += steps as isize,
+            Direction::L => point.0 -= steps as isize,
         }
         points.push(point);
     }
@@ -56,9 +74,9 @@ fn shoelace_area(points: &Vec<(isize, isize)>) -> isize {
 pub struct Day18Puzzle {}
 impl super::solve::Puzzle<String> for Day18Puzzle {
     fn solve(&self, document: &str) -> String {
-        let instructions = get_instructions(document);
+        let instructions = get_instructions(document, &get_line_instruction);
 
-        let bondary_size = instructions.iter().map(|(steps, _)| steps).sum::<usize>() / 2;
+        let bondary_size = instructions.iter().map(|(steps, _)| steps).sum::<u64>() / 2;
 
         let points = get_point_sequence(instructions);
         let area = shoelace_area(&points) + bondary_size as isize + 1;
@@ -66,7 +84,13 @@ impl super::solve::Puzzle<String> for Day18Puzzle {
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        let instructions = get_instructions(document, &get_updated_line_instruction);
+
+        let bondary_size = instructions.iter().map(|(steps, _)| steps).sum::<u64>() / 2;
+
+        let points = get_point_sequence(instructions);
+        let area = shoelace_area(&points) + bondary_size as isize + 1;
+        return area.to_string();
     }
 }
 
@@ -76,6 +100,6 @@ mod tests {
 
     #[test]
     fn test_get_line_instruction() {
-        assert_eq!(get_line_instruction("D 10 (#6cc0d3)"), (10, Direction::S));
+        assert_eq!(get_line_instruction("D 10 (#6cc0d3)"), (10, Direction::D));
     }
 }
