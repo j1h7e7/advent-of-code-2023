@@ -1,9 +1,9 @@
 use std::collections::hash_map::DefaultHasher;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
-enum Signal {
+pub enum Signal {
     LOW,
     HIGH,
 }
@@ -37,6 +37,9 @@ impl ComModule for Conjunction {
             .map(|x| (x.clone(), Signal::LOW))
             .collect::<BTreeMap<String, Signal>>();
     }
+    fn mod_type(&self) -> &str {
+        return "conjunction";
+    }
 }
 #[derive(Debug, Hash, PartialEq, Eq)]
 struct FlipFlop {
@@ -53,6 +56,9 @@ impl ComModule for FlipFlop {
     fn my_hash(&self, state: &mut DefaultHasher) {
         self.hash(state);
     }
+    fn mod_type(&self) -> &str {
+        return "flipflop";
+    }
 }
 #[derive(Debug, Hash, PartialEq, Eq)]
 struct Broadcast {}
@@ -61,12 +67,16 @@ impl ComModule for Broadcast {
         return Some(signal);
     }
     fn my_hash(&self, _state: &mut DefaultHasher) {}
+    fn mod_type(&self) -> &str {
+        return "broadcaster";
+    }
 }
 
 trait ComModule {
     fn output(&mut self, signal: Signal, origin: &str) -> Option<Signal>;
     fn reset(&mut self, _input_nodes: Vec<String>) {}
     fn my_hash(&self, state: &mut DefaultHasher);
+    fn mod_type(&self) -> &str;
 }
 
 struct ComModuleNetwork {
@@ -220,7 +230,66 @@ impl super::solve::Puzzle<String> for Day20Puzzle {
     }
 
     fn solve2(&self, document: &str) -> String {
-        panic!("Not implemented");
+        // Hard to solve in general. Let's visualize the problem
+        // Credit to the subreddit
+        let network = load_all_modules(document);
+        let branch_starts = network.outputs.get("broadcaster").unwrap();
+
+        let flipflops = network
+            .modules
+            .iter()
+            .filter(|(_, module)| module.mod_type() == "flipflop")
+            .map(|(name, _)| name.clone())
+            .collect::<HashSet<String>>();
+
+        let mut key_values: Vec<u128> = Vec::new();
+
+        for branch_start in branch_starts {
+            let mut path: Vec<String> = vec![];
+            let mut active = branch_start.clone();
+            let mut targets: HashSet<String> = HashSet::new();
+
+            let mut key_value = 0_usize;
+            let mut inc = 1_usize;
+            loop {
+                let outputs = network.outputs.get(&active).unwrap();
+                let flipflouts = outputs
+                    .iter()
+                    .filter(|x| flipflops.contains(*x))
+                    .collect::<Vec<&String>>();
+                let non_flipflouts = outputs
+                    .iter()
+                    .filter(|x| !flipflops.contains(*x))
+                    .collect::<Vec<&String>>();
+
+                let is_key: bool = match outputs.len() - flipflouts.len() {
+                    0 => false,
+                    1 => true,
+                    _ => panic!("Invalid number of outputs"),
+                };
+                let key_char = match is_key {
+                    true => '*',
+                    false => ' ',
+                };
+
+                if is_key {
+                    key_value += inc;
+                }
+                inc <<= 1;
+
+                path.push(format!("{}{}", active, key_char));
+                if flipflouts.len() == 0 {
+                    break;
+                }
+                active = flipflouts[0].clone();
+
+                targets.extend(non_flipflouts.iter().map(|x| x.to_string()));
+            }
+            println!("{:?} {:?} {}", path, targets, key_value);
+            key_values.push(key_value as u128);
+        }
+
+        return key_values.iter().fold(1_u128, |a, b| a * b).to_string();
     }
 }
 
